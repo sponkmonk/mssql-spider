@@ -148,8 +148,14 @@ class MSSQLClient:
         if depth >= max_depth:
             raise RecursionError('maximum recursion depth exceeded')
 
-        if self.id in self.seen:
-            log.spider_status(self, 'repeated')
+        # FIXME in rare cases the whoami query fails for a unknown reason
+        try:
+            if self.id in self.seen:
+                log.spider_status(self, 'repeated')
+                return self
+        except SQLErrorException as e:
+            log.general_error((self.connection.server, self.connection.port), 'spider', e)
+            logging.exception(e)
             return self
         self.seen.add(self.id)
 
